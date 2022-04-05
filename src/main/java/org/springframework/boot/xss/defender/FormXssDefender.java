@@ -74,6 +74,11 @@ public class FormXssDefender extends DefaultXssDefender {
         }
 
         @Override
+        public void setValue(Object value) {
+            super.setValue(value == null ? EMPTY_STRING : value);
+        }
+
+        @Override
         public void setAsText(String text) throws IllegalArgumentException {
             final String safeText = defender.defend(properties, text);
             super.setAsText(safeText);

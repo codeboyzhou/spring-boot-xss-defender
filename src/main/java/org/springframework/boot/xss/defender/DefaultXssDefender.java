@@ -24,7 +24,12 @@ public class DefaultXssDefender {
     private static final Logger logger = LoggerFactory.getLogger(DefaultXssDefender.class);
 
     /**
-     * Process the actual input text
+     * Empty string constant.
+     */
+    protected static final String EMPTY_STRING = "";
+
+    /**
+     * Process the actual input text.
      *
      * @param properties The instance of {@link XssDefenderProperties}
      * @param text       The actual input text
@@ -50,7 +55,7 @@ public class DefaultXssDefender {
         }
 
         // Annoying NPE
-        return "";
+        return EMPTY_STRING;
     }
 
     /**
@@ -62,15 +67,16 @@ public class DefaultXssDefender {
      */
     private String trim(String text, boolean isEscapeAfterTrimEnabled) {
         final String cleanedText = Jsoup.clean(text, Safelist.basic());
+
         if (logger.isDebugEnabled()) {
-            logger.debug("Trim text for XSS defense, input: {}, output: {}", text, cleanedText);
+            logger.debug("Trim text to prevent XSS risk, input: {}, output (maybe is empty): {}", text, cleanedText);
         }
 
-        if (isEscapeAfterTrimEnabled) {
-            return this.escape(cleanedText);
+        if (cleanedText.length() != text.length() && logger.isWarnEnabled()) {
+            logger.warn("XSS risk detected in the input parameter: {}, cleaned text (maybe empty) is: {}", text, cleanedText);
         }
 
-        return cleanedText;
+        return isEscapeAfterTrimEnabled ? this.escape(cleanedText) : cleanedText;
     }
 
     /**
