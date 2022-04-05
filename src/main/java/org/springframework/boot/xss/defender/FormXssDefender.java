@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.InitBinder;
 
 import java.beans.PropertyEditor;
@@ -22,6 +23,7 @@ import java.beans.PropertyEditorSupport;
  * @see WebDataBinder#registerCustomEditor(Class, PropertyEditor)
  * @since 1.0.0
  */
+@ControllerAdvice
 public class FormXssDefender extends DefaultXssDefender {
 
     private static final Logger logger = LoggerFactory.getLogger(FormXssDefender.class);
@@ -38,6 +40,9 @@ public class FormXssDefender extends DefaultXssDefender {
         this.properties = properties;
     }
 
+    /**
+     * NOTICE: {@link FormXssDefender} must have annotation {@link ControllerAdvice} to guarantee {@link InitBinder} does work globally.
+     */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         if (logger.isDebugEnabled()) {

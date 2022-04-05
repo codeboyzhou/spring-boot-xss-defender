@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.xss.defender.DefaultXssDefender;
 import org.springframework.boot.xss.defender.FormXssDefender;
 import org.springframework.boot.xss.defender.interceptor.XssDefenderInterceptor;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -42,11 +41,6 @@ public class XssDefenderConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(interceptor).order(Ordered.LOWEST_PRECEDENCE);
-    }
-
-    @Bean
-    public FormXssDefender formXssDefender() {
-        return new FormXssDefender(properties);
     }
 
 }
