@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.xss.defender.annotation.XssDefenderIgnore;
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
  * @see XssDefenderIgnore
  * @since 1.0.0
  */
+@Configuration
 public class XssDefenderInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(XssDefenderInterceptor.class);
