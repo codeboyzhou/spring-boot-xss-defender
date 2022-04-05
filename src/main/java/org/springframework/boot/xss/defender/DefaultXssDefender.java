@@ -1,10 +1,9 @@
-package org.springframework.boot.xss.defender.util;
+package org.springframework.boot.xss.defender;
 
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.xss.defender.DefenseStrategy;
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
 import org.springframework.boot.xss.defender.exception.UnsupportedXssDefenseStrategyException;
 import org.springframework.boot.xss.defender.exception.XssRiskDetectedException;
@@ -20,9 +19,9 @@ import java.nio.charset.StandardCharsets;
  * @author codeboyzhou
  * @since 1.0.0
  */
-public class XssDefenderUtils {
+public class DefaultXssDefender {
 
-    private static final Logger logger = LoggerFactory.getLogger(XssDefenderUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultXssDefender.class);
 
     /**
      * Process the actual input text
@@ -31,7 +30,7 @@ public class XssDefenderUtils {
      * @param text       The actual input text
      * @return The safe text without XSS risk
      */
-    public static String defend(XssDefenderProperties properties, String text) {
+    protected String defend(XssDefenderProperties properties, String text) {
         if (StringUtils.hasText(text)) {
             // Trim leading and trailing whitespace.
             text = StringUtils.trimWhitespace(text);
@@ -40,9 +39,9 @@ public class XssDefenderUtils {
             final boolean isEscapeAfterTrimEnabled = properties.isEscapeAfterTrimEnabled();
 
             if (defenseStrategy == DefenseStrategy.TRIM) {
-                return trim(text, isEscapeAfterTrimEnabled);
+                return this.trim(text, isEscapeAfterTrimEnabled);
             } else if (defenseStrategy == DefenseStrategy.ESCAPE) {
-                return escape(text);
+                return this.escape(text);
             } else if (defenseStrategy == DefenseStrategy.THROW) {
                 throw new XssRiskDetectedException(text);
             } else {
@@ -50,7 +49,7 @@ public class XssDefenderUtils {
             }
         }
 
-        // Avoid NullPointerException
+        // Annoying NPE
         return "";
     }
 
@@ -61,14 +60,14 @@ public class XssDefenderUtils {
      * @param isEscapeAfterTrimEnabled The escape-after-trim is enable or not
      * @return The safe text without XSS risk
      */
-    private static String trim(String text, boolean isEscapeAfterTrimEnabled) {
+    private String trim(String text, boolean isEscapeAfterTrimEnabled) {
         final String cleanedText = Jsoup.clean(text, Safelist.basic());
         if (logger.isDebugEnabled()) {
             logger.debug("Trim text for XSS defense, input: {}, output: {}", text, cleanedText);
         }
 
         if (isEscapeAfterTrimEnabled) {
-            return escape(cleanedText);
+            return this.escape(cleanedText);
         }
 
         return cleanedText;
@@ -80,7 +79,7 @@ public class XssDefenderUtils {
      * @param text The actual input text
      * @return The safe text without XSS risk
      */
-    private static String escape(String text) {
+    private String escape(String text) {
         return HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
     }
 

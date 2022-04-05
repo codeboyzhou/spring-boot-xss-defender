@@ -1,7 +1,6 @@
 package org.springframework.boot.xss.defender;
 
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
-import org.springframework.boot.xss.defender.util.XssDefenderUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 
@@ -15,12 +14,13 @@ import java.beans.PropertyEditorSupport;
  * for the parameter's secondary processing, so as to get rid of the potential XSS risk.
  *
  * @author codeboyzhou
+ * @see DefaultXssDefender
  * @see PropertyEditorSupport
  * @see StringXssPropertyEditor
  * @see WebDataBinder#registerCustomEditor(Class, PropertyEditor)
  * @since 1.0.0
  */
-public class FormXssDefender {
+public class FormXssDefender extends DefaultXssDefender {
 
     /**
      * A properties object for spring boot auto configuration.
@@ -33,7 +33,7 @@ public class FormXssDefender {
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(String.class, new StringXssPropertyEditor(properties));
+        binder.registerCustomEditor(String.class, new StringXssPropertyEditor(this, properties));
     }
 
     /**
@@ -44,17 +44,23 @@ public class FormXssDefender {
     private static class StringXssPropertyEditor extends PropertyEditorSupport {
 
         /**
+         * The instance of {@link DefaultXssDefender}
+         */
+        private final DefaultXssDefender defender;
+
+        /**
          * A properties object for spring boot auto configuration.
          */
         private final XssDefenderProperties properties;
 
-        private StringXssPropertyEditor(XssDefenderProperties properties) {
+        private StringXssPropertyEditor(DefaultXssDefender defender, XssDefenderProperties properties) {
+            this.defender = defender;
             this.properties = properties;
         }
 
         @Override
         public void setAsText(String text) throws IllegalArgumentException {
-            final String safeText = XssDefenderUtils.defend(properties, text);
+            final String safeText = defender.defend(properties, text);
             super.setAsText(safeText);
         }
 
