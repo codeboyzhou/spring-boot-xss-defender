@@ -1,5 +1,7 @@
 package org.springframework.boot.xss.defender;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -22,17 +24,25 @@ import java.beans.PropertyEditorSupport;
  */
 public class FormXssDefender extends DefaultXssDefender {
 
+    private static final Logger logger = LoggerFactory.getLogger(FormXssDefender.class);
+
     /**
      * A properties object for spring boot auto configuration.
      */
     private final XssDefenderProperties properties;
 
     public FormXssDefender(XssDefenderProperties properties) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Registered java bean: {}", FormXssDefender.class);
+        }
         this.properties = properties;
     }
 
     @InitBinder
     public void initBinder(WebDataBinder binder) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Initializing WebDataBinder, register custom property editor: {}", StringXssPropertyEditor.class);
+        }
         binder.registerCustomEditor(String.class, new StringXssPropertyEditor(this, properties));
     }
 

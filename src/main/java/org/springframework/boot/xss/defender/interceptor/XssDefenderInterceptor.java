@@ -36,6 +36,9 @@ public class XssDefenderInterceptor implements HandlerInterceptor {
     private final XssDefenderProperties properties;
 
     public XssDefenderInterceptor(XssDefenderProperties properties) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Registered interceptor: {}", XssDefenderInterceptor.class);
+        }
         this.properties = properties;
     }
 
