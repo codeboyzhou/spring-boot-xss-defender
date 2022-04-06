@@ -19,14 +19,14 @@ import java.nio.charset.StandardCharsets;
  * @author codeboyzhou
  * @since 1.0.0
  */
-public class DefaultXssDefender {
+public interface XssDefender {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultXssDefender.class);
+    Logger logger = LoggerFactory.getLogger(XssDefender.class);
 
     /**
      * Empty string constant.
      */
-    protected static final String EMPTY_STRING = "";
+    String EMPTY_STRING = "";
 
     /**
      * Process the actual input text.
@@ -35,7 +35,7 @@ public class DefaultXssDefender {
      * @param text       The actual input text
      * @return The safe text without XSS risk
      */
-    protected String defend(XssDefenderProperties properties, String text) {
+    default String defend(XssDefenderProperties properties, String text) {
         if (StringUtils.hasText(text)) {
             // Trim leading and trailing whitespace.
             text = StringUtils.trimWhitespace(text);
@@ -65,7 +65,7 @@ public class DefaultXssDefender {
      * @param isEscapeAfterTrimEnabled The escape-after-trim is enable or not
      * @return The safe text without XSS risk
      */
-    private String trim(String text, boolean isEscapeAfterTrimEnabled) {
+    default String trim(String text, boolean isEscapeAfterTrimEnabled) {
         final String cleanedText = Jsoup.clean(text, Safelist.basic());
 
         if (logger.isDebugEnabled()) {
@@ -85,7 +85,7 @@ public class DefaultXssDefender {
      * @param text The actual input text
      * @return The safe text without XSS risk
      */
-    private String escape(String text) {
+    default String escape(String text) {
         return HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
     }
 

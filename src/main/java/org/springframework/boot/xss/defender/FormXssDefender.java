@@ -3,6 +3,7 @@ package org.springframework.boot.xss.defender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.xss.defender.autoconfigure.XssDefenderProperties;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -17,14 +18,14 @@ import java.beans.PropertyEditorSupport;
  * for the parameter's secondary processing, so as to get rid of the potential XSS risk.
  *
  * @author codeboyzhou
- * @see DefaultXssDefender
+ * @see XssDefender
  * @see PropertyEditorSupport
  * @see StringXssPropertyEditor
  * @see WebDataBinder#registerCustomEditor(Class, PropertyEditor)
  * @since 1.0.0
  */
 @ControllerAdvice
-public class FormXssDefender extends DefaultXssDefender {
+public class FormXssDefender implements XssDefender {
 
     private static final Logger logger = LoggerFactory.getLogger(FormXssDefender.class);
 
@@ -52,23 +53,23 @@ public class FormXssDefender extends DefaultXssDefender {
     }
 
     /**
-     * A custom implementation of {@link PropertyEditor} for the parameter's secondary processing.
+     * An inner class, custom implementation of {@link PropertyEditor} for the parameter's secondary processing.
      *
      * @see FormXssDefender
      */
     private static class StringXssPropertyEditor extends PropertyEditorSupport {
 
         /**
-         * The instance of {@link DefaultXssDefender}
+         * The instance of {@link XssDefender}
          */
-        private final DefaultXssDefender defender;
+        private final XssDefender defender;
 
         /**
          * A properties object for spring boot auto configuration.
          */
         private final XssDefenderProperties properties;
 
-        private StringXssPropertyEditor(DefaultXssDefender defender, XssDefenderProperties properties) {
+        private StringXssPropertyEditor(XssDefender defender, XssDefenderProperties properties) {
             this.defender = defender;
             this.properties = properties;
         }
@@ -80,7 +81,7 @@ public class FormXssDefender extends DefaultXssDefender {
 
         @Override
         public void setAsText(String text) throws IllegalArgumentException {
-            final String safeText = defender.defend(properties, text);
+            final String safeText = properties.isEnabled() ? defender.defend(properties, text) : StringUtils.trimWhitespace(text);
             super.setAsText(safeText);
         }
 
