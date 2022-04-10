@@ -13,70 +13,98 @@ import org.springframework.web.util.HtmlUtils;
 import java.nio.charset.StandardCharsets;
 
 /**
- * This class is mainly responsible for processing the actual input text,
- * implements different defense logic according to the different XSS defense strategy has been configured.
+ * This class is mainly responsible for processing the actual input text.
+ * Implements different defense logic according to the different XSS defense strategy.
  *
  * @author codeboyzhou
  * @since 1.0.0
  */
-public interface XssDefender {
+public class XssDefender {
 
-    Logger logger = LoggerFactory.getLogger(XssDefender.class);
+    private static final Logger logger = LoggerFactory.getLogger(XssDefender.class);
 
     /**
      * Empty string constant.
      */
-    String EMPTY_STRING = "";
+    public static final String EMPTY_STRING = "";
+
+    /**
+     * Escaped empty string constant, for printing more clear log information.
+     */
+    private static final String ESCAPED_EMPTY_STRING = "\"\"";
+
+    /**
+     * The XSS defense strategy.
+     *
+     * @see DefenseStrategy
+     */
+    private final String defenseStrategy;
+
+    /**
+     * Whether continue to escape the input text after XSS safe trim.
+     *
+     * @see XssDefenderProperties#isEscapeAfterTrimEnabled()
+     */
+    private final boolean needEscapeAfterTrim;
+
+    public XssDefender(String defenseStrategy, boolean needEscapeAfterTrim) {
+        this.defenseStrategy = defenseStrategy;
+        this.needEscapeAfterTrim = needEscapeAfterTrim;
+    }
 
     /**
      * Process the actual input text.
      *
-     * @param properties The instance of {@link XssDefenderProperties}
-     * @param text       The actual input text
+     * @param text The actual input text
      * @return The safe text without XSS risk
      */
-    default String defend(XssDefenderProperties properties, String text) {
-        if (StringUtils.hasText(text)) {
-            // Trim leading and trailing whitespace.
-            text = StringUtils.trimWhitespace(text);
-
-            DefenseStrategy defenseStrategy = properties.getStrategy();
-            final boolean isEscapeAfterTrimEnabled = properties.isEscapeAfterTrimEnabled();
-
-            if (defenseStrategy == DefenseStrategy.TRIM) {
-                return this.trim(text, isEscapeAfterTrimEnabled);
-            } else if (defenseStrategy == DefenseStrategy.ESCAPE) {
-                return this.escape(text);
-            } else if (defenseStrategy == DefenseStrategy.THROW) {
-                throw new XssRiskDetectedException(text);
-            } else {
-                throw new UnsupportedXssDefenseStrategyException(defenseStrategy.name().toLowerCase());
-            }
-        }
-
-        // Annoying NPE
-        return EMPTY_STRING;
+    public String defend(String text) {
+        return StringUtils.hasText(text) ? this.doDefend(text) : EMPTY_STRING;
     }
 
     /**
-     * Trim all the XSS risky characters, and check if the escape-after-trim will be necessary.
+     * A helper method of {@link #defend(String)}
+     */
+    private String doDefend(String text) {
+        // Trim leading and trailing whitespace.
+        text = StringUtils.trimWhitespace(text);
+
+        if (DefenseStrategy.isTrim(defenseStrategy)) {
+            return this.trim(text);
+        } else if (DefenseStrategy.isEscape(defenseStrategy)) {
+            return this.escape(text);
+        } else if (DefenseStrategy.isThrow(defenseStrategy)) {
+            this.checkAndThrow(text);
+        } else {
+            throw new UnsupportedXssDefenseStrategyException(defenseStrategy);
+        }
+
+        return text;
+    }
+
+    /**
+     * Trim all the XSS risky characters, and check if the escape-after-trim option is set {@code true}.
      *
-     * @param text                     The actual input text
-     * @param isEscapeAfterTrimEnabled The escape-after-trim is enable or not
+     * @param text The actual input text
      * @return The safe text without XSS risk
      */
-    default String trim(String text, boolean isEscapeAfterTrimEnabled) {
-        final String cleanedText = Jsoup.clean(text, Safelist.basic());
+    private String trim(String text) {
+        String safeText = Jsoup.clean(text, Safelist.basic());
+        if (needEscapeAfterTrim) {
+            safeText = HtmlUtils.htmlEscape(safeText, StandardCharsets.UTF_8.name());
+        }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Trim text to prevent XSS risk, input: {}, output (maybe is empty): {}", text, cleanedText);
+            logger.debug("Trim text to prevent XSS risk, escape-after-trim option: {}, input: {}, output: {}",
+                    needEscapeAfterTrim, text, safeText.isEmpty() ? ESCAPED_EMPTY_STRING : safeText);
         }
 
-        if (cleanedText.length() != text.length() && logger.isWarnEnabled()) {
-            logger.warn("XSS risk detected in the input parameter: {}, cleaned text (maybe empty) is: {}", text, cleanedText);
+        if (safeText.length() != text.length() && logger.isWarnEnabled()) {
+            logger.warn("XSS risk detected in the input parameter: {}, escape-after-trim option: {}, cleaned text: {}",
+                    text, needEscapeAfterTrim, safeText.isEmpty() ? ESCAPED_EMPTY_STRING : safeText);
         }
 
-        return isEscapeAfterTrimEnabled ? this.escape(cleanedText) : cleanedText;
+        return safeText;
     }
 
     /**
@@ -85,8 +113,30 @@ public interface XssDefender {
      * @param text The actual input text
      * @return The safe text without XSS risk
      */
-    default String escape(String text) {
-        return HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
+    private String escape(String text) {
+        final String safeText = HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
+        if (logger.isWarnEnabled()) {
+            logger.warn("XSS risk detected in the input parameter: {}, escaped text: {}",
+                    text, safeText.isEmpty() ? ESCAPED_EMPTY_STRING : safeText);
+        }
+        return safeText;
+    }
+
+    /**
+     * Check if the input text is xss-safe, an exception will be thrown if the answer is false.
+     *
+     * @param text The actual input text
+     */
+    private void checkAndThrow(String text) {
+        final boolean isValidText = Jsoup.isValid(text, Safelist.basic());
+
+        if (isValidText && logger.isDebugEnabled()) {
+            logger.debug("Checking XSS risk, the input text is safe: {}", text);
+        }
+
+        if (!isValidText) {
+            throw new XssRiskDetectedException(text);
+        }
     }
 
 }

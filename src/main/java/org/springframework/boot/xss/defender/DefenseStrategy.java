@@ -13,6 +13,7 @@ import org.springframework.web.util.HtmlUtils;
  * @since 1.0.0
  */
 public enum DefenseStrategy {
+
     /**
      * If this value is used, the {@link XssDefender} will trim all the risky XSS characters held by
      * input text when XSS risk detected, {@link Jsoup#clean(String, Safelist)} will finish it actually.
@@ -30,5 +31,18 @@ public enum DefenseStrategy {
      *
      * @see UnsupportedXssDefenseStrategyException
      */
-    THROW
+    THROW;
+
+    static boolean isTrim(String defenseStrategy) {
+        return TRIM.name().equalsIgnoreCase(defenseStrategy);
+    }
+
+    static boolean isEscape(String defenseStrategy) {
+        return ESCAPE.name().equalsIgnoreCase(defenseStrategy);
+    }
+
+    static boolean isThrow(String defenseStrategy) {
+        return THROW.name().equalsIgnoreCase(defenseStrategy);
+    }
+
 }

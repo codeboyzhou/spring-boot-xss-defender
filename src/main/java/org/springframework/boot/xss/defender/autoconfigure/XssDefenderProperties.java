@@ -29,12 +29,12 @@ public class XssDefenderProperties {
      *
      * @see DefenseStrategy
      */
-    private DefenseStrategy strategy = DefenseStrategy.TRIM;
+    private String strategy = DefenseStrategy.TRIM.name().toLowerCase();
 
     /**
      * Whether continue to escape the input text after XSS safe trim, default value is {@code false}.
      * <p>
-     * NOTICE: It won't be effective unless the value of {@link DefenseStrategy} is {@code TRIM}.
+     * NOTICE: It won't be work unless the value of {@link DefenseStrategy} is {@code TRIM}.
      */
     private boolean escapeAfterTrim = false;
 
@@ -46,7 +46,7 @@ public class XssDefenderProperties {
         this.enabled = false;
     }
 
-    public DefenseStrategy getStrategy() {
+    public String getStrategy() {
         return strategy;
     }
 
