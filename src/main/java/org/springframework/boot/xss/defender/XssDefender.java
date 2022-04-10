@@ -116,8 +116,7 @@ public class XssDefender {
     private String escape(String text) {
         final String safeText = HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
         if (logger.isWarnEnabled()) {
-            logger.warn("XSS risk detected in the input parameter: {}, escaped text: {}",
-                    text, safeText.isEmpty() ? ESCAPED_EMPTY_STRING : safeText);
+            logger.warn("XSS risk detected in the input parameter: {}, escaped text: {}", text, safeText);
         }
         return safeText;
     }
